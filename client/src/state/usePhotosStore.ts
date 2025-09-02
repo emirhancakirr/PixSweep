@@ -22,6 +22,7 @@ type State = {
   decisions: Record<number, Decision>;
 
   setFsAndPhotos: (fs: FsContext, photos: Photo[]) => void;
+  setPhotos: (photos: Photo[]) => void; // Safari fallback (no fs)
   clear: () => void;
 
   setDecision: (i: number, d: Decision) => void;
@@ -37,6 +38,9 @@ export const usePhotosStore = create<State>((set, get) => ({
 
   setFsAndPhotos: (fs, photos) =>
     set({ fs, photos, index: 0, decisions: {} }),
+
+  setPhotos: (photos) =>               // NEW: fallback (no rootDir)
+    set({ photos, index: 0, decisions: {} }),
 
   clear: () =>
     set({ fs: undefined, photos: [], index: 0, decisions: {} }),

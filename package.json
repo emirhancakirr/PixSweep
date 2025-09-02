@@ -1,11 +1,16 @@
 {
   "name": "picsweep",
   "private": true,
-  "workspaces": ["client"],
+  "workspaces": [
+    "client"
+  ],
   "scripts": {
     "dev:client": "npm --prefix client run dev",
     "build:client": "npm --prefix client run build",
     "typecheck:client": "npm --prefix client run typecheck",
     "lint:client": "npm --prefix client run lint"
+  },
+  "dependencies": {
+    "zustand": "^5.0.7"
   }
 }

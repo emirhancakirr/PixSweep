@@ -1,5 +1,6 @@
 import type { Photo } from "../../state/usePhotosStore";
 import type { RefObject } from "react";
+import { getPreviewBlob } from "./convertHeic";
 
 const IMAGE_RE = /\.(jpe?g|png|gif|webp|bmp|tiff|heic)$/i;
 
@@ -31,20 +32,19 @@ export async function pickWithDirectoryInput(
 }
 
 async function filesToPhotos(fileList: FileList): Promise<Photo[]> {
-  const arr = Array.from(fileList);
-  const photos: Photo[] = arr
-    .filter((f) => IMAGE_RE.test(f.name))
-    .map((file) => {
+  const arr = Array.from(fileList).filter(f => IMAGE_RE.test(f.name));
+  const photos = await Promise.all(
+    arr.map(async (file) => {
       const relPath = (file as any).webkitRelativePath || file.name;
-      const previewUrl = URL.createObjectURL(file);
+      const previewBlob = await getPreviewBlob(file);
       return {
         id: crypto.randomUUID(),
         name: file.name,
         relPath,
         sizeBytes: file.size,
-        previewUrl,
+        previewUrl: URL.createObjectURL(previewBlob),
       };
-    });
-
+    })
+  );
   return photos;
 }
