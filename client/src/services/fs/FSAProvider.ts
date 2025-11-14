@@ -1,5 +1,4 @@
-import type { Photo } from "../../state/usePhotosStore";
-import { getPreviewBlob } from "./convertHeic";
+import type { Photo } from "../../types";
 
 const IMAGE_RE = /\.(jpe?g|png|gif|webp|bmp|tiff|heic)$/i;
 
@@ -17,13 +16,12 @@ export async function pickWithFSARecursive(): Promise<{
       if (handle.kind === "file" && IMAGE_RE.test(name)) {
         const file = await (handle as FileSystemFileHandle).getFile();
         const relPath = prefix ? `${prefix}/${name}` : name;
-        const previewBlob = await getPreviewBlob(file);
         photos.push({
           id: crypto.randomUUID(),
           name: file.name,
           relPath,
           sizeBytes: file.size,
-          previewUrl: URL.createObjectURL(previewBlob),
+          file,
         });
       } else if (handle.kind === "directory") {
         const nextPrefix = prefix ? `${prefix}/${name}` : name;

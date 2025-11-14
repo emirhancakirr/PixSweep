@@ -1,25 +1,11 @@
 import { create } from "zustand";
-
-/** Tek foto kaydı */
-export type Photo = {
-  id: string;
-  name: string;
-  relPath: string;       // "2024/08/IMG_123.jpg" gibi
-  sizeBytes: number;
-  previewUrl: string;    // URL.createObjectURL(file)
-};
-
-export type Decision = "keep" | "trash" | "archive" | null;
-
-type FsContext = {
-  rootDir: FileSystemDirectoryHandle; // silme için lazım
-};
+import type { Photo, Decision, Decisions, FsContext } from "../types";
 
 type State = {
   fs?: FsContext;
   photos: Photo[];
   index: number;
-  decisions: Record<number, Decision>;
+  decisions: Decisions;
 
   setFsAndPhotos: (fs: FsContext, photos: Photo[]) => void;
   setPhotos: (photos: Photo[]) => void; // Safari fallback (no fs)
@@ -49,8 +35,28 @@ export const usePhotosStore = create<State>((set, get) => ({
     set((s) => ({ decisions: { ...s.decisions, [i]: d } })),
 
   next: () => {
-    const { index, photos } = get();
-    if (index < photos.length - 1) set({ index: index + 1 });
+    const { index, photos, decisions } = get();
+    
+    // Eğer son fotoğrafta değilsen, normal olarak sonrakine geç
+    if (index < photos.length - 1) {
+      set({ index: index + 1 });
+      return;
+    }
+    
+    // Son fotoğraftaysan, karar verilmemiş fotoğrafları bul
+    const undecidedIndices = photos
+      .map((_, i) => i)
+      .filter(i => {
+        const decision = decisions[i];
+        // Karar verilmemiş veya null olanları bul
+        return !decision || (decision !== "keep" && decision !== "trash");
+      });
+    
+    // Eğer karar verilmemiş fotoğraflar varsa, ilkine git
+    if (undecidedIndices.length > 0) {
+      set({ index: undecidedIndices[0] });
+    }
+    // Değilse, son fotoğrafta kal (tüm fotoğraflara karar verilmiş)
   },
 
   prev: () => {
@@ -59,18 +65,13 @@ export const usePhotosStore = create<State>((set, get) => ({
   },
 }));
 
-/** Selector’lar */
+/**
+ * Selector'lar
+ * 
+ * Not: Stats hesaplaması artık reviewService'te.
+ * Buradaki selectors minimal tutulmalı.
+ */
 export const selectors = {
   currentPhoto: (s: State) => s.photos[s.index],
   currentDecision: (s: State) => s.decisions[s.index] ?? null,
-  stats: (s: State) => {
-    const total = s.photos.length;
-    const decided = Object.keys(s.decisions).length;
-    const trashCount = Object.values(s.decisions).filter((d) => d === "trash").length;
-    const trashBytes = Object.entries(s.decisions)
-      .filter(([, d]) => d === "trash")
-      .map(([i]) => s.photos[Number(i)]?.sizeBytes ?? 0)
-      .reduce((a, b) => a + b, 0);
-    return { total, decided, trashCount, trashBytes };
-  },
 };

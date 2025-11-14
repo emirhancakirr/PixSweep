@@ -1,24 +1,18 @@
 import { useState, useRef } from "react";
-import type { Photo } from "../../state/usePhotosStore";
-import { pickWithFSARecursive } from "../../services/fs/FSAProvider";
-import { pickWithDirectoryInput } from "../../services/fs/DirectoryInputProvider"; // fallback
+import {
+  pickWithFSARecursive,
+  pickWithDirectoryInput,
+  isDirectoryPickerSupported
+} from "../../services/fs";
 import { usePhotosStore } from "../../state/usePhotosStore";
 
 export default function Welcome() {
   const setFsAndPhotos = usePhotosStore(s => s.setFsAndPhotos);
-  // Fallback: eğer store’da setPhotos yoksa inline bir setter oluştur.
-  const setPhotosSelector = usePhotosStore(s => s.setPhotos) as
-    | ((photos: Photo[]) => void)
-    | undefined;
-  const setPhotos =
-    setPhotosSelector ||
-    ((photos: Photo[]) => {
-      console.warn("setPhotos action bulunamadı; fallback setter kullanıldı.");
-      usePhotosStore.setState({ photos, index: 0, decisions: {} });
-    });
+  const setPhotos = usePhotosStore(s => s.setPhotos);
+
   const [err, setErr] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null); // hidden directory input
-  const isFSAAvailable = !!(window as any).showDirectoryPicker;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isFSAAvailable = isDirectoryPickerSupported();
 
   async function handlePick() {
     setErr(null);

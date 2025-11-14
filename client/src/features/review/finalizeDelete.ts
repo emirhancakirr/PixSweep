@@ -1,43 +1,26 @@
 import { usePhotosStore } from "../../state/usePhotosStore";
+import { finalizeReview } from "../../services/review";
 
-/** Path parçalayarak hedef klasöre in ve dosyayı sil */
-async function deleteByRelativePath(
-  root: FileSystemDirectoryHandle,
-  relPath: string
-) {
-  const parts = relPath.split("/");
-  const fileName = parts.pop()!;
-  let dir = root;
-  for (const p of parts) {
-    dir = await dir.getDirectoryHandle(p);
-  }
-  await dir.removeEntry(fileName);
-}
-
-/** Yazma izni iste */
-async function ensureWritePermission(dir: FileSystemDirectoryHandle) {
-  // @ts-ignore
-  const perm = await dir.requestPermission?.({ mode: "readwrite" });
-  if (perm && perm !== "granted") throw new Error("Klasöre yazma izni verilmedi.");
-}
-
-export async function finalizeDelete() {
+/**
+ * Review'ı sonlandır ve trash fotoğrafları sil
+ * 
+ * Store'dan veriyi alır ve reviewService'e delege eder.
+ * İşlem tamamlandıktan sonra store'u temizler.
+ * 
+ * @throws FS context yoksa veya silme izni verilmezse hata fırlatır
+ */
+export async function finalizeDelete(): Promise<void> {
   const { fs, photos, decisions, clear } = usePhotosStore.getState();
-  if (!fs) throw new Error("FS bağlamı yok.");
-  await ensureWritePermission(fs.rootDir);
-
-  const trashIndexes = Object.entries(decisions)
-    .filter(([, d]) => d === "trash")
-    .map(([i]) => Number(i));
-
-  for (const idx of trashIndexes) {
-    const p = photos[idx];
-    if (!p) continue;
-    await deleteByRelativePath(fs.rootDir, p.relPath);
-    try { URL.revokeObjectURL(p.previewUrl); } catch {}
+  
+  if (!fs) {
+    throw new Error("FS bağlamı yok. Dosyalar File System Access API ile seçilmemiş.");
   }
 
-  // İstersen sadece silinenleri listeden çıkarabilirsin;
-  // burada basitçe başa dönüyoruz.
+  // Business logic service katmanında
+  const deletedCount = await finalizeReview(fs, photos, decisions);
+  
+  console.log(`Review finalized. ${deletedCount} photos deleted.`);
+
+  // Store'u temizle ve başa dön
   clear();
 }

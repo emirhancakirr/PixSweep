@@ -1,6 +1,5 @@
-import type { Photo } from "../../state/usePhotosStore";
+import type { Photo } from "../../types";
 import type { RefObject } from "react";
-import { getPreviewBlob } from "./convertHeic";
 
 const IMAGE_RE = /\.(jpe?g|png|gif|webp|bmp|tiff|heic)$/i;
 
@@ -36,13 +35,12 @@ async function filesToPhotos(fileList: FileList): Promise<Photo[]> {
   const photos = await Promise.all(
     arr.map(async (file) => {
       const relPath = (file as any).webkitRelativePath || file.name;
-      const previewBlob = await getPreviewBlob(file);
       return {
         id: crypto.randomUUID(),
         name: file.name,
         relPath,
         sizeBytes: file.size,
-        previewUrl: URL.createObjectURL(previewBlob),
+        file, // sadece dosya
       };
     })
   );
