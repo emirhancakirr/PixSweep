@@ -18,11 +18,8 @@ export async function getPreviewBlob(file: File): Promise<Blob> {
     });
     
     const blob = Array.isArray(result) ? result[0] : result;
-    console.log(`✅ HEIC conversion successful: ${file.name} -> ${blob.size} bytes`);
     return blob;
   } catch (e) {
-    console.error("❌ HEIC conversion failed:", e);
-    console.warn("Using original file as fallback");
     return file;
   }
 }

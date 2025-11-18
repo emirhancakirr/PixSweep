@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import type { AnimationDirection } from "../../types";
+import type { AnimationDirection, Decision } from "../../types";
 import { ensurePreviewUrl } from "../../services/fs/convertHeic";
 import { PhotoOverlay } from "./PhotoOverlay";
+import { DecisionBadge } from "../DecisionBadge";
 
 interface PhotoViewerProps {
   file: File;
   animationDirection: AnimationDirection;
+  decision?: Decision;
 }
 
 /**
@@ -13,8 +15,9 @@ interface PhotoViewerProps {
  * - HEIC dönüştürme desteği
  * - Loading ve error state'leri
  * - Animasyon desteği
+ * - Decision badge gösterimi
  */
-export function PhotoViewer({ file, animationDirection }: PhotoViewerProps) {
+export function PhotoViewer({ file, animationDirection, decision }: PhotoViewerProps) {
   const [preview, setPreview] = useState<string>();
   const [error, setError] = useState<string>();
   const [loading, setLoading] = useState(true);
@@ -26,7 +29,6 @@ export function PhotoViewer({ file, animationDirection }: PhotoViewerProps) {
     setLoading(true);
     setError(undefined);
 
-    console.log(`Loading image: ${file.name}, type: ${file.type}, size: ${file.size}`);
 
     ensurePreviewUrl(file)
       .then(p => {
@@ -34,7 +36,6 @@ export function PhotoViewer({ file, animationDirection }: PhotoViewerProps) {
         url = p;
         setPreview(p);
         setLoading(false);
-        console.log(`✅ Successfully loaded: ${file.name}`);
       })
       .catch(err => {
         if (!active) return;
@@ -123,13 +124,18 @@ export function PhotoViewer({ file, animationDirection }: PhotoViewerProps) {
       {/* Renk overlay */}
       <PhotoOverlay direction={animationDirection} />
 
+      {/* Decision badge */}
+      <DecisionBadge decision={decision || null} position="top-right" />
+
       {/* Fotoğraf */}
       <img
         src={preview}
         alt={file.name}
         style={{
-          maxWidth: "90%",
-          maxHeight: "80vh",
+          maxWidth: "100%",
+          maxHeight: "100%",
+          width: "auto",
+          height: "auto",
           objectFit: "contain",
           borderRadius: 8,
         }}

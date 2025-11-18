@@ -1,19 +1,27 @@
 import { CircularProgress } from "../../components/CircularProgress";
 import { PhotoViewer } from "../../components/PhotoViewer";
+import { FinalizeDeletePage } from "./FinalizeDeletePage";
 import { usePhotoReview } from "../../hooks/usePhotoReview";
 import { useKeyboardControls } from "../../hooks/useKeyboardControls";
+import { usePhotosStore } from "../../state/usePhotosStore";
 
 export function ReviewPage() {
   // Review state'i ve actions
-  const { photos, index, currentPhoto, stats, allReviewed, next, setDecision } = usePhotoReview();
+  const { photos, index, currentPhoto, currentDecision, stats, allReviewed, next, setDecision } = usePhotoReview();
+  const readyToFinalize = usePhotosStore((s) => s.readyToFinalize);
 
-  // Klavye kontrolleri
+  // Klavye kontrolleri (her zaman çağrılmalı, conditional return'den önce)
   const { animationDirection } = useKeyboardControls({
     index,
     onDecision: setDecision,
     onNext: next,
     animationDuration: 300,
   });
+
+  // Finalize ekranına geç
+  if (readyToFinalize) {
+    return <FinalizeDeletePage />;
+  }
 
   if (!photos.length) {
     return (
@@ -42,10 +50,11 @@ export function ReviewPage() {
         display: "grid",
         gridTemplateColumns: "1fr auto",
         gridTemplateRows: "auto 1fr",
-        gap: "20px",
-        padding: "20px",
+        gap: "12px",
+        padding: "12px",
         overflow: "hidden",
         backgroundColor: "#000",
+        boxSizing: "border-box",
       }}
     >
       {/* CSS Animations */}
@@ -106,6 +115,7 @@ export function ReviewPage() {
           <PhotoViewer
             file={currentPhoto.file}
             animationDirection={animationDirection}
+            decision={currentDecision}
           />
         ) : null}
       </div>
@@ -124,7 +134,7 @@ export function ReviewPage() {
           current={stats.decided}
           total={stats.total}
           label="photos"
-          size={120}
+          size={100}
           textColor="#fff"
         />
       </div>
@@ -140,29 +150,29 @@ export function ReviewPage() {
             justifyContent: "flex-end",
           }}
         >
-          {/* KeyboardInstructions için wrapper - position olmadan kullanım */}
+          {/* KeyboardInstructions için wrapper - compact */}
           <div
             style={{
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               backdropFilter: "blur(10px)",
-              borderRadius: "12px",
-              padding: "16px",
+              borderRadius: "8px",
+              padding: "10px",
               display: "flex",
               flexDirection: "column",
-              gap: "12px",
+              gap: "8px",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              minWidth: "150px",
+              minWidth: "130px",
             }}
           >
             <div
               style={{
-                fontSize: "0.75em",
+                fontSize: "0.65em",
                 fontWeight: "600",
                 color: "rgba(255, 255, 255, 0.6)",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                marginBottom: "4px",
+                marginBottom: "2px",
               }}
             >
               Shortcuts
@@ -170,38 +180,38 @@ export function ReviewPage() {
             {[
               { key: "→", action: "Keep", color: "#22c55e", icon: "✓" },
               { key: "←", action: "Trash", color: "#ef4444", icon: "✗" },
-              { key: "Space", action: "Skip", color: "#f59e0b", icon: "↑" },
+              { key: "␣", action: "Skip", color: "#f59e0b", icon: "↑" },
             ].map((instruction) => (
               <div
                 key={instruction.key}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
+                  gap: "8px",
                 }}
               >
                 <div
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.1)",
                     border: `1px solid ${instruction.color}`,
-                    borderRadius: "6px",
-                    padding: "6px 10px",
+                    borderRadius: "4px",
+                    padding: "4px 8px",
                     fontFamily: "monospace",
-                    fontSize: "0.9em",
+                    fontSize: "0.8em",
                     fontWeight: "600",
                     color: instruction.color,
-                    minWidth: "50px",
+                    minWidth: "40px",
                     textAlign: "center",
-                    boxShadow: `0 0 8px ${instruction.color}20`,
+                    boxShadow: `0 0 6px ${instruction.color}20`,
                   }}
                 >
                   {instruction.key}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
-                  <span style={{ fontSize: "1.2em", color: instruction.color, fontWeight: "bold" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", flex: 1 }}>
+                  <span style={{ fontSize: "1em", color: instruction.color, fontWeight: "bold" }}>
                     {instruction.icon}
                   </span>
-                  <span style={{ fontSize: "0.95em", color: "rgba(255, 255, 255, 0.9)", fontWeight: "500" }}>
+                  <span style={{ fontSize: "0.85em", color: "rgba(255, 255, 255, 0.9)", fontWeight: "500" }}>
                     {instruction.action}
                   </span>
                 </div>

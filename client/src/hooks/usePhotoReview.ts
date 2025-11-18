@@ -11,6 +11,7 @@ interface UsePhotoReviewReturn {
   photos: Photo[];
   index: number;
   currentPhoto: Photo | null;
+  currentDecision: Decision;
   stats: ReviewStats;
   allReviewed: boolean;
   next: () => void;
@@ -34,7 +35,7 @@ export function usePhotoReview(): UsePhotoReviewReturn {
   const setDecision = usePhotosStore((s) => s.setDecision);
 
   // Stats hesapla
-  const decidedCount = usePhotosStore((s) => Object.keys(s.decisions).length);
+  const decidedCount = usePhotosStore((s) => Object.values(s.decisions).filter(decision => decision !== null).length);
   const totalCount = photos.length;
 
   const stats = useMemo<ReviewStats>(
@@ -51,6 +52,9 @@ export function usePhotoReview(): UsePhotoReviewReturn {
     return photos[index] || null;
   }, [photos, index]);
 
+  // Mevcut fotoğrafın decision'ı
+  const currentDecision = usePhotosStore((s) => s.decisions[index] || null);
+
   // Tüm fotoğraflar review edildi mi?
   const allReviewed = useMemo<boolean>(() => {
     if (photos.length === 0) return false;
@@ -65,6 +69,7 @@ export function usePhotoReview(): UsePhotoReviewReturn {
     photos,
     index,
     currentPhoto,
+    currentDecision,
     stats,
     allReviewed,
     next,
