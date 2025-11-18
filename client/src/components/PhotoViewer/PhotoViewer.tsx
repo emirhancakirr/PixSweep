@@ -141,7 +141,7 @@ export function PhotoViewer({ file, animationDirection, decision }: PhotoViewerP
         }}
         onError={(e) => {
           console.error(`Image failed to render: ${file.name}`, e);
-          setError("Resim görüntülenemiyor");
+          setError("Resim  görüntülenemiyor");
         }}
       />
     </div>
