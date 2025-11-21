@@ -2,6 +2,8 @@
 
 A modern, browser-based photo management tool that helps you quickly review and clean up large photo collections. Built with React and TypeScript, PixSweep runs entirely in your browser with no server required.
 
+![ScreenRecording2025-11-21at19 11 38-ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/337f62d9-e17e-45d0-8199-be85d8c7f18d)
+
 ## ✨ Features
 
 ### 🚀 Core Features
@@ -265,7 +267,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Emirhan Çakır - [@emirhancakir](https://github.com/emirhancakir)
+Emirhan Çakır - [@emirhancakir](https://github.com/emirhancakirr)
+
+Linkedin - [Profile](https://www.linkedin.com/in/emirhan-cakir/)
 
 Project Link: [https://github.com/emirhancakir/pixsweep](https://github.com/emirhancakir/pixsweep)
 
