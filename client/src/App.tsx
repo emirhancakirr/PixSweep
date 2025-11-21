@@ -10,17 +10,7 @@ export default function App() {
       {hasPhotos ? (
         <ReviewPage />
       ) : (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: "100vh",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Welcome />
-        </div>
+        <Welcome />
       )}
     </>
   );

@@ -6,17 +6,30 @@ import { DecisionBadge } from "../DecisionBadge";
 interface PhotoGridItemProps {
     photo: Photo;
     decision: Decision;
+    onDecisionChange?: (photoIndex: number, newDecision: Decision) => void;
+    photoIndex?: number;
 }
 
 /**
- * Grid'deki tek bir fotoğraf item'ı
+ * Single photo item in the grid
  * Thumbnail + Decision badge
  */
-export function PhotoGridItem({ photo, decision }: PhotoGridItemProps) {
+export function PhotoGridItem({ photo, decision, onDecisionChange, photoIndex }: PhotoGridItemProps) {
     const [preview, setPreview] = useState<string>();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+
+    const handleDoubleClick = () => {
+        if (!onDecisionChange || photoIndex === undefined) return;
+
+        // keep <-> trash toggle
+        if (decision === "keep") {
+            onDecisionChange(photoIndex, "trash");
+        } else if (decision === "trash") {
+            onDecisionChange(photoIndex, "keep");
+        }
+    };
 
     useEffect(() => {
         let url: string;
@@ -59,17 +72,21 @@ export function PhotoGridItem({ photo, decision }: PhotoGridItemProps) {
             style={{
                 position: "relative",
                 aspectRatio: "1",
+                width: "100%",
+                minWidth: 0,
                 backgroundColor: "#1a1a1a",
                 borderRadius: "8px",
                 overflow: "hidden",
                 border: `3px solid ${getBorderColor()}`,
                 boxShadow: `0 4px 12px ${getBorderColor()}40`,
-                transition: "transform 0.2s ease-out",
+                transition: "transform 0.2s ease-out, z-index 0.2s ease-out",
                 transform: isHovered ? "scale(1.05)" : "scale(1)",
+                zIndex: isHovered ? 10 : 1,
                 cursor: "pointer",
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            onDoubleClick={handleDoubleClick}
         >
             {/* Decision Badge */}
             <DecisionBadge decision={decision} position="top-left" />

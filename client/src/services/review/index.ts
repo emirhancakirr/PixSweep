@@ -3,4 +3,5 @@
  */
 
 export * from './reviewService';
+export * from './navigationService';
 

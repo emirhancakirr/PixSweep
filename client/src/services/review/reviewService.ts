@@ -1,18 +1,18 @@
-import type { Photo, Decision, Decisions, FsContext } from "../../types";
+import type { Photo, Decisions, FsContext } from "../../types";
 import { deletePhotos } from "../fs/fileSystemService";
 
 /**
  * Review Service
  * 
- * Review işlemlerinin business logic'ini yöneten service katmanı.
+ * Business logic layer for review operations.
  */
 
 /**
- * Trash olarak işaretlenen fotoğrafları filtrele
+ * Filter photos marked as trash
  * 
- * @param photos - Tüm fotoğraflar
- * @param decisions - Kararlar
- * @returns Trash olarak işaretlenen fotoğraflar
+ * @param photos - All photos
+ * @param decisions - Decisions
+ * @returns Photos marked as trash
  */
 export function getTrashPhotos(
   photos: Photo[],
@@ -24,15 +24,15 @@ export function getTrashPhotos(
 
   return trashIndices
     .map(index => photos[index])
-    .filter(Boolean); // null/undefined'ları filtrele
+    .filter(Boolean); // Filter out null/undefined
 }
 
 /**
- * Keep olarak işaretlenen fotoğrafları filtrele
+ * Filter photos marked as keep
  * 
- * @param photos - Tüm fotoğraflar
- * @param decisions - Kararlar
- * @returns Keep olarak işaretlenen fotoğraflar
+ * @param photos - All photos
+ * @param decisions - Decisions
+ * @returns Photos marked as keep
  */
 export function getKeepPhotos(
   photos: Photo[],
@@ -48,11 +48,11 @@ export function getKeepPhotos(
 }
 
 /**
- * Review istatistiklerini hesapla
+ * Calculate review statistics
  * 
- * @param photos - Tüm fotoğraflar
- * @param decisions - Kararlar
- * @returns İstatistikler
+ * @param photos - All photos
+ * @param decisions - Decisions
+ * @returns Statistics
  */
 export function calculateReviewStats(
   photos: Photo[],
@@ -89,11 +89,11 @@ export function calculateReviewStats(
 }
 
 /**
- * Tüm fotoğraflar review edilmiş mi?
+ * Check if all photos have been reviewed
  * 
- * @param photos - Tüm fotoğraflar
- * @param decisions - Kararlar
- * @returns true eğer hepsi keep/trash ise
+ * @param photos - All photos
+ * @param decisions - Decisions
+ * @returns true if all are keep/trash
  */
 export function isReviewComplete(
   photos: Photo[],
@@ -108,12 +108,12 @@ export function isReviewComplete(
 }
 
 /**
- * Review'ı sonlandır ve trash fotoğrafları sil
+ * Finalize review and delete trash photos
  * 
  * @param fsContext - File system context
- * @param photos - Tüm fotoğraflar
- * @param decisions - Kararlar
- * @returns Silinen fotoğraf sayısı
+ * @param photos - All photos
+ * @param decisions - Decisions
+ * @returns Number of deleted photos
  */
 export async function finalizeReview(
   fsContext: FsContext,

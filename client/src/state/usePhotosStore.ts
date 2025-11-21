@@ -1,19 +1,44 @@
+/**
+ * Global Photos Store
+ * 
+ * Central state management for photo review application using Zustand.
+ * Manages photos, user decisions, navigation state, and duplicate detection results.
+ * 
+ * State Structure:
+ * - fs: File system context (if using File System Access API)
+ * - photos: Array of all loaded photos
+ * - index: Current photo index
+ * - decisions: Map of photo index to decision (keep/trash/null)
+ * - tourCompleted: Whether first review tour is complete
+ * - readyToFinalize: Whether all photos are reviewed and ready for deletion
+ * - duplicateMap: Map of photo IDs to their duplicate photo IDs
+ * 
+ * Design Principles:
+ * - Single source of truth for application state
+ * - Selector-based subscriptions for efficient re-renders
+ * - Business logic delegated to services (NavigationService)
+ * - Immutable state updates
+ */
+
 import { create } from "zustand";
 import type { Photo, Decision, Decisions, FsContext } from "../types";
+import { NavigationService } from "../services/review/navigationService";
 
 type State = {
   fs?: FsContext;
   photos: Photo[];
   index: number;
   decisions: Decisions;
-  tourCompleted: boolean; // İlk tur tamamlandı mı?
-  readyToFinalize: boolean; // Tüm fotoğraflar review edildi, finalize ekranına geç
+  tourCompleted: boolean; // First tour completed?
+  readyToFinalize: boolean; // All photos reviewed, ready to finalize
+  duplicateMap: Record<string, string[]>; // Map of photo ID to array of duplicate photo IDs
 
   setFsAndPhotos: (fs: FsContext, photos: Photo[]) => void;
   setPhotos: (photos: Photo[]) => void; // Safari fallback (no fs)
   clear: () => void;
 
   setDecision: (i: number, d: Decision) => void;
+  setDuplicateMap: (map: Record<string, string[]>) => void;
   next: () => void;
   prev: () => void;
 };
@@ -25,70 +50,74 @@ export const usePhotosStore = create<State>((set, get) => ({
   decisions: {},
   tourCompleted: false,
   readyToFinalize: false,
+  duplicateMap: {},
 
   setFsAndPhotos: (fs, photos) =>
-    set({ fs, photos, index: 0, decisions: {}, tourCompleted: false, readyToFinalize: false }),
+    set((s) => ({ 
+      fs, 
+      photos, 
+      index: 0, 
+      decisions: {}, 
+      tourCompleted: false, 
+      readyToFinalize: false, 
+      // duplicateMap'i koru - eğer önceden set edildiyse kaybolmasın
+      duplicateMap: s.duplicateMap 
+    })),
 
-  setPhotos: (photos) =>               // NEW: fallback (no rootDir)
-    set({ photos, index: 0, decisions: {}, tourCompleted: false, readyToFinalize: false }),
+  setPhotos: (photos) =>
+    set((s) => ({ 
+      photos, 
+      index: 0, 
+      decisions: {}, 
+      tourCompleted: false, 
+      readyToFinalize: false, 
+      // duplicateMap'i koru - eğer önceden set edildiyse kaybolmasın
+      duplicateMap: s.duplicateMap 
+    })),
 
   clear: () =>
-    set({ fs: undefined, photos: [], index: 0, decisions: {}, tourCompleted: false, readyToFinalize: false }),
+    set({ fs: undefined, photos: [], index: 0, decisions: {}, tourCompleted: false, readyToFinalize: false, duplicateMap: {} }),
 
   setDecision: (i, d) =>
     set((s) => ({ decisions: { ...s.decisions, [i]: d } })),
 
-  next: () => {
-    const { index, photos, decisions, tourCompleted } = get();
-    
-    
-    // 📍 DURUM 2: Son fotoğraftasın
-    // Eğer ilk tur tamamlanmamışsa, turu tamamla
-    if (index === photos.length - 1 && !tourCompleted) {
-      set({ tourCompleted: true });
-      // Son fotoğrafta kal, bir sonraki next() çağrısında undecided'lara bakılacak
-      console.log("tourCompleted");
-      return;
-    }
+  setDuplicateMap: (map) =>
+    set({ duplicateMap: map }),
 
-        // 📍 DURUM 1: Normal fotoğraflar arasında ilerle
-    if (index < photos.length && !tourCompleted) {
-          set({ index: index + 1 });
-          return;
-        }
-    
-    // 📍 DURUM 3: İlk tur tamamlandı, undecided'lara bak
-    if (tourCompleted) {
-      const undecidedIndices = photos
-        .map((_, i) => i)
-        .filter(i => {
-          const decision = decisions[i];
-          // Karar verilmemiş (null) veya skip edilmiş olanları bul
-          return !decision || (decision !== "keep" && decision !== "trash");
-        });
-      
-      // Eğer karar verilmemiş fotoğraflar varsa, ilkine git
-      if (undecidedIndices.length > 0) {
-        console.log("undecidedIndices", undecidedIndices);
-        set({ index: undecidedIndices[0] });
-      } else {
-        // Tüm fotoğraflar review edildi, finalize ekranına geç
-        set({ readyToFinalize: true });
-      }
+  next: () => {
+    const state = get();
+    const result = NavigationService.calculateNext({
+      index: state.index,
+      photos: state.photos,
+      decisions: state.decisions,
+      tourCompleted: state.tourCompleted,
+    });
+
+    if (result.newIndex !== undefined) {
+      set({ index: result.newIndex });
+    }
+    if (result.tourCompleted !== undefined) {
+      set({ tourCompleted: result.tourCompleted });
+    }
+    if (result.readyToFinalize !== undefined) {
+      set({ readyToFinalize: result.readyToFinalize });
     }
   },
 
   prev: () => {
     const { index } = get();
-    if (index > 0) set({ index: index - 1 });
+    const newIndex = NavigationService.calculatePrev(index);
+    if (newIndex !== null) {
+      set({ index: newIndex });
+    }
   },
 }));
 
 /**
- * Selector'lar
+ * Store selectors
  * 
- * Not: Stats hesaplaması artık reviewService'te.
- * Buradaki selectors minimal tutulmalı.
+ * Note: Stats calculation is now in reviewService.
+ * Keep selectors here minimal.
  */
 export const selectors = {
   currentPhoto: (s: State) => s.photos[s.index],

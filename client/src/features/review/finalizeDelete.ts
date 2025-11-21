@@ -2,25 +2,25 @@ import { usePhotosStore } from "../../state/usePhotosStore";
 import { finalizeReview } from "../../services/review";
 
 /**
- * Review'ı sonlandır ve trash fotoğrafları sil
+ * Finalize review and delete trash photos
  * 
- * Store'dan veriyi alır ve reviewService'e delege eder.
- * İşlem tamamlandıktan sonra store'u temizler.
+ * Fetches data from store and delegates to reviewService.
+ * Clears store after operation completes.
  * 
- * @throws FS context yoksa veya silme izni verilmezse hata fırlatır
+ * @throws Error if FS context is missing or deletion permission is denied
  */
 export async function finalizeDelete(): Promise<void> {
   const { fs, photos, decisions, clear } = usePhotosStore.getState();
   
   if (!fs) {
-    throw new Error("FS bağlamı yok. Dosyalar File System Access API ile seçilmemiş.");
+    throw new Error("FS context missing. Files were not selected using File System Access API.");
   }
 
-  // Business logic service katmanında
+  // Business logic is in service layer
   const deletedCount = await finalizeReview(fs, photos, decisions);
   
   console.log(`Review finalized. ${deletedCount} photos deleted.`);
 
-  // Store'u temizle ve başa dön
+  // Clear store and return to start
   clear();
 }

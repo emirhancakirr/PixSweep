@@ -5,13 +5,15 @@ interface PhotoGridProps {
     photos: Photo[];
     decisions: Decisions;
     columns?: number;
+    allPhotos?: Photo[]; // All photos (to find index)
+    onDecisionChange?: (photoIndex: number, newDecision: import("../../types").Decision) => void;
 }
 
 /**
- * Fotoğraf grid component'i
- * Tüm fotoğrafları grid şeklinde gösterir
+ * Photo grid component
+ * Displays all photos in a grid layout
  */
-export function PhotoGrid({ photos, decisions, columns = 5 }: PhotoGridProps) {
+export function PhotoGrid({ photos, decisions, columns = 5, allPhotos, onDecisionChange }: PhotoGridProps) {
     if (photos.length === 0) {
         return (
             <div
@@ -21,7 +23,7 @@ export function PhotoGrid({ photos, decisions, columns = 5 }: PhotoGridProps) {
                     color: "rgba(255, 255, 255, 0.5)",
                 }}
             >
-                Fotoğraf yok
+                No photos
             </div>
         );
     }
@@ -36,15 +38,25 @@ export function PhotoGrid({ photos, decisions, columns = 5 }: PhotoGridProps) {
                 width: "100%",
                 maxHeight: "100%",
                 overflowY: "auto",
+                boxSizing: "border-box",
             }}
         >
-            {photos.map((photo, index) => (
-                <PhotoGridItem
-                    key={photo.id}
-                    photo={photo}
-                    decision={decisions[index] || null}
-                />
-            ))}
+            {photos.map((photo, index) => {
+                // Find index in original photos array
+                const originalIndex = allPhotos
+                    ? allPhotos.findIndex(p => p.id === photo.id)
+                    : index;
+
+                return (
+                    <PhotoGridItem
+                        key={photo.id}
+                        photo={photo}
+                        decision={decisions[originalIndex] || null}
+                        onDecisionChange={onDecisionChange}
+                        photoIndex={originalIndex}
+                    />
+                );
+            })}
         </div>
     );
 }

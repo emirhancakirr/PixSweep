@@ -3,16 +3,16 @@ import type { Photo, FsContext } from "../../types";
 /**
  * File System Service
  * 
- * Dosya sistemi işlemlerini yöneten service katmanı.
- * Store'a bağımlılığı yoktur - pure functions.
+ * Service layer for file system operations.
+ * No dependency on store - pure functions.
  */
 
 /**
- * Relative path'e göre dosya sil
- * Path'i parçalayarak hedef klasöre gider ve dosyayı siler
+ * Delete file by relative path
+ * Navigates through folder hierarchy and deletes the file
  * 
  * @param root - Root directory handle
- * @param relPath - Relative path (örn: "2024/08/photo.jpg")
+ * @param relPath - Relative path (e.g., "2024/08/photo.jpg")
  */
 export async function deleteByRelativePath(
   root: FileSystemDirectoryHandle,
@@ -27,20 +27,20 @@ export async function deleteByRelativePath(
 
   let dir = root;
   
-  // Klasör hiyerarşisinde ilerle
+  // Navigate through folder hierarchy
   for (const part of parts) {
     dir = await dir.getDirectoryHandle(part);
   }
 
-  // Dosyayı sil
+  // Delete the file
   await dir.removeEntry(fileName);
 }
 
 /**
- * Directory için yazma izni iste
+ * Request write permission for directory
  * 
  * @param dir - Directory handle
- * @throws Yazma izni verilmezse hata fırlatır
+ * @throws Error if write permission is not granted
  */
 export async function ensureWritePermission(
   dir: FileSystemDirectoryHandle
@@ -49,16 +49,16 @@ export async function ensureWritePermission(
   const permission = await dir.requestPermission?.({ mode: "readwrite" });
   
   if (permission && permission !== "granted") {
-    throw new Error("Klasöre yazma izni verilmedi.");
+    throw new Error("Write permission not granted for directory.");
   }
 }
 
 /**
- * Birden fazla dosyayı sil
+ * Delete multiple files
  * 
  * @param fsContext - File system context
- * @param photos - Silinecek fotoğraflar
- * @returns Silinen fotoğraf sayısı
+ * @param photos - Photos to delete
+ * @returns Number of deleted photos
  */
 export async function deletePhotos(
   fsContext: FsContext,
@@ -72,7 +72,7 @@ export async function deletePhotos(
     try {
       await deleteByRelativePath(fsContext.rootDir, photo.relPath);
       
-      // Preview URL'i temizle
+      // Clean up preview URL
       if (photo.previewUrl) {
         try {
           URL.revokeObjectURL(photo.previewUrl);
@@ -84,7 +84,7 @@ export async function deletePhotos(
       deletedCount++;
     } catch (error) {
       console.error(`Failed to delete ${photo.relPath}:`, error);
-      // Devam et, diğer dosyaları silmeye çalış
+      // Continue, try to delete other files
     }
   }
 
@@ -92,7 +92,7 @@ export async function deletePhotos(
 }
 
 /**
- * Directory picker API'nin mevcut olup olmadığını kontrol et
+ * Check if Directory Picker API is available
  */
 export function isDirectoryPickerSupported(): boolean {
   return !!(window as any).showDirectoryPicker;

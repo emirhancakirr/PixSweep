@@ -14,27 +14,28 @@ interface UsePhotoReviewReturn {
   currentDecision: Decision;
   stats: ReviewStats;
   allReviewed: boolean;
+  hasDuplicates: boolean; // Whether current photo has duplicates
   next: () => void;
   prev: () => void;
   setDecision: (index: number, decision: Decision) => void;
 }
 
 /**
- * Fotoğraf review state'ini yöneten custom hook
+ * Custom hook for managing photo review state
  * 
- * Store'dan gerekli tüm verileri çeker ve hesaplamaları yapar.
+ * Fetches all necessary data from store and performs calculations.
  * 
- * @returns Review state ve actions
+ * @returns Review state and actions
  */
 export function usePhotoReview(): UsePhotoReviewReturn {
-  // Store'dan veri çek
+  // Fetch data from store
   const photos = usePhotosStore((s) => s.photos);
   const index = usePhotosStore((s) => s.index);
   const next = usePhotosStore((s) => s.next);
   const prev = usePhotosStore((s) => s.prev);
   const setDecision = usePhotosStore((s) => s.setDecision);
 
-  // Stats hesapla
+  // Calculate stats
   const decidedCount = usePhotosStore((s) => Object.values(s.decisions).filter(decision => decision !== null).length);
   const totalCount = photos.length;
 
@@ -46,16 +47,31 @@ export function usePhotoReview(): UsePhotoReviewReturn {
     [totalCount, decidedCount]
   );
 
-  // Mevcut fotoğraf
+  // Current photo
   const currentPhoto = useMemo<Photo | null>(() => {
     if (!photos || photos.length === 0) return null;
     return photos[index] || null;
   }, [photos, index]);
 
-  // Mevcut fotoğrafın decision'ı
+  // Current photo's decision
   const currentDecision = usePhotosStore((s) => s.decisions[index] || null);
 
-  // Tüm fotoğraflar review edildi mi?
+  // Check if current photo has duplicates
+  // duplicateMap'i store'dan subscribe ediyoruz ki değiştiğinde yeniden hesaplansın
+  const duplicateMap = usePhotosStore((s) => s.duplicateMap);
+  const hasDuplicates = useMemo<boolean>(() => {
+    if (!currentPhoto) return false;
+    // duplicateMap[currentPhoto.id] varsa ve içinde duplicate ID'ler varsa true döner
+    // Örnek: duplicateMap = { "photo1": ["photo2", "photo3"] }
+    // currentPhoto.id = "photo1" ise -> ["photo2", "photo3"].length > 0 -> true
+    const duplicateIds = duplicateMap[currentPhoto.id];
+    const hasDups = duplicateIds?.length > 0 || false;
+    
+    
+    return hasDups;
+  }, [currentPhoto, duplicateMap]);
+
+  // Check if all photos have been reviewed
   const allReviewed = useMemo<boolean>(() => {
     if (photos.length === 0) return false;
     const decisions = usePhotosStore.getState().decisions;
@@ -72,6 +88,7 @@ export function usePhotoReview(): UsePhotoReviewReturn {
     currentDecision,
     stats,
     allReviewed,
+    hasDuplicates,
     next,
     prev,
     setDecision,
